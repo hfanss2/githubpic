@@ -1,0 +1,37 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # 匹配 v 开头的标签，如 v1.0.0
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build artifacts (示例：生成文件)
+        run: |
+          # 你的构建脚本，如：
+          echo "Hello World" > build/artifact.txt
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 自动使用内置 token
+        with:
+          tag_name: ${{ github.ref_name }}  # 当前推送的标签名
+          release_name: Release ${{ github.ref_name }}
+          body: "自动生成的 Release 描述"
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Artifact
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} 
+          asset_path: ./build/artifact.txt  # 上传的文件路径
+          asset_name: artifact.txt         # 在 Release 中显示的名称
+          asset_content_type: text/plain

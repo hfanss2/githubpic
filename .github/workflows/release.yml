@@ -1,17 +1,22 @@
+name: Update Release on Push
+
+on:
+  push:
+    branches: main  # 替换为你的分支
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write  # 必须
-      issues: write    # 可选，如果使用issue关联
-      pull-requests: write  # 可选
+    permissions:  # 关键权限声明
+      contents: write
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
-    - name: Update Release with commit message
+      uses: actions/checkout@v4  # 使用最新版本
+      
+    - name: Create/Update Release
       uses: ncipollo/release-action@v1
       with:
-         tag: v1.0.0  # 确保这与你的tag匹配
-         name: Release v1.0.0  # 可选，定义发布名称
-         body: ${{ github.event.head_commit.message }}  # 使用commit message作为发布说明
-         token: ${{ secrets.GITHUB_TOKEN }}  # 使用默认的GitHub token，如果有需要也可以自定义token
+        tag: v1.0.0  # 替换为实际标签
+        name: "Release ${{ github.ref_name }}"
+        body: ${{ github.event.head_commit.message }}
+        token: ${{ secrets.GITHUB_TOKEN }}

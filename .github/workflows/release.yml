@@ -1,23 +1,47 @@
-name: Update Release on Push
+name: Smart Release Updater
 
 on:
   push:
-    branches: main  # 替换为你的分支
+    branches: [ main ]
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
-    permissions:  # 关键权限声明
+    permissions:
       contents: write
+
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4  # 使用最新版本
-      
-    - name: Create/Update Release
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取全部历史记录（重要！）
+
+    - name: Setup Git
+      run: |
+        git config user.name "hfanss2"
+        git config user.email "2158798@qq.com"
+
+    - name: Create or reuse tag
+      run: |
+        # 检查标签是否存在
+        if git rev-parse v1.0.0 >/dev/null 2>&1; then
+          echo "Tag exists"
+        else
+          git tag v1.0.0
+          git push origin v1.0.0
+        fi
+
+    - name: Update Release
       uses: ncipollo/release-action@v1
       with:
-        tag: v1.0.0  # 替换为实际标签
-        name: "Release ${{ github.ref_name }}"
-        body: ${{ github.event.head_commit.message }}
+        tag: v1.0.0
+        name: "Release ${{ github.sha }}"
+        body: |
+          Commit Message: ${{ github.event.head_commit.message }}
+          Build Date: $(date -u)
         token: ${{ secrets.GITHUB_TOKEN }}
-        update: true  # 关键！允许更新现有Release
+        update: true
+        allowUpdates: true
+        draft: false
+        prerelease: false
+        makeLatest: true

@@ -1,83 +1,20 @@
-name: Update Release Content
-
+name: Update Release on Push
+ 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Release tag to update'
-        required: true
-      notes:
-        description: 'Additional release notes'
-        required: true
-      add_files:
-        description: 'Files to add (comma-separated)'
-        required: false
-      remove_files:
-        description: 'Files to remove (comma-separated)'
-        required: false
-
+  push:
+    branches:
+      - main  # 修改为你的目标分支名，比如master或main
+ 
 jobs:
-  update-release:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          fetch-depth: 0
-
-      - name: Setup GitHub CLI
-        run: sudo apt-get install -y gh
-
-      - name: Configure Git
-        run: |
-          git config --global user.name "hfanss2"
-          git config --global user.email "2158798@github.com"
-          gh auth setup-git
-
-      - name: Authenticate with GitHub CLI
-        run: gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Get current release notes
-        id: get-notes
-        run: |
-          current_notes=$(gh release view ${{ inputs.tag }} --json body -q '.body')
-          current_notes="${current_notes//'%'/'%25'}"
-          current_notes="${current_notes//$'\n'/'%0A'}"
-          echo "current_notes=$current_notes" >> $GITHUB_OUTPUT
-
-      - name: Update release notes
-        run: |
-          new_notes="${{ steps.get-notes.outputs.current_notes }}%0A%0A${{ inputs.notes }}"
-          new_notes="${new_notes//'%25'/'%'}"
-          new_notes="${new_notes//'%0A'/$'\n'}"
-          
-          gh release edit ${{ inputs.tag }} \
-            --notes "$new_notes"
-
-      - name: Remove old assets
-        if: ${{ inputs.remove_files != '' }}
-        run: |
-          IFS=',' read -ra files <<< "${{ inputs.remove_files }}"
-          for file in "${files[@]}"; do
-            gh release delete-asset ${{ inputs.tag }} "$file" -y
-          done
-
-      - name: Upload new assets
-        if: ${{ inputs.add_files != '' }}
-        run: |
-          IFS=',' read -ra files <<< "${{ inputs.add_files }}"
-          for file in "${files[@]}"; do
-            # 确保文件存在
-            if [ -f "$file" ]; then
-              gh release upload ${{ inputs.tag }} "$file"
-            else
-              echo "File not found: $file"
-            fi
-          done
-
-      - name: Push updated files
-        run: |
-          git add .
-          git commit -m "Release assets updated for ${{ inputs.tag }}" || echo "No changes to commit"
-          git push origin HEAD
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Update Release with commit message
+      uses: ncipollo/release-action@v1
+      with:
+        tag: v1.0.0  # 确保这与你的tag匹配
+        name: Release v1.0.0  # 可选，定义发布名称
+        body: ${{ github.event.head_commit.message }}  # 使用commit message作为发布说明
+        token: ${{ secrets.GITHUB_TOKEN }}  # 使用默认的GitHub token，如果有需要也可以自定义token

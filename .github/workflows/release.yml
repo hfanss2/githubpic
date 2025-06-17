@@ -1,10 +1,10 @@
 jobs:
   build:
     runs-on: ubuntu-latest
-	   permissions:
-		    contents: write  # 必须
-		    issues: write    # 可选，如果使用issue关联
-		    pull-requests: write  # 可选
+    permissions:
+      contents: write  # 必须
+      issues: write    # 可选，如果使用issue关联
+      pull-requests: write  # 可选
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
